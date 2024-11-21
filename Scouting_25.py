@@ -6,7 +6,7 @@ from sklearn.metrics.pairwise import euclidean_distances
 from scipy.stats import percentileofscore
 
 # File paths
-data_dir = "/Users/lucaloschmann/Desktop/FBREF Stats 24:25/"
+data_dir = "data"
 goalkeeper_file_path = data_dir + "goalkeeper_combined_df.csv"
 combined_file_path = data_dir + "combined_df.csv"
 outfield_file_path = data_dir + "outfield_df.csv"
