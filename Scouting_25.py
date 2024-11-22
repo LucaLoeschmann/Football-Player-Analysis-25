@@ -10,7 +10,7 @@ data_dir = "data/"
 goalkeeper_file_path = data_dir + "goalkeeper_combined_df.csv"
 combined_file_path = data_dir + "combined_df.csv"
 outfield_file_path = data_dir + "outfield_df.csv"
-goalkeeper_file_path = data_dir + "goalkeeper_df.csv"
+goalkeeper_file_path = data_dir + "goalkeepers_df.csv"
 
 # Load datasets
 goalkeeper_combined_df = pd.read_csv(goalkeeper_file_path)
