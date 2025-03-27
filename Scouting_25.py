@@ -297,7 +297,7 @@ import pandas as pd
 import numpy as np
 
 # File paths
-data_dir = "data"
+data_dir = "data/"
 outfield_df = pd.read_csv(data_dir + "outfield_df.csv")
 goalkeeper_df = pd.read_csv(data_dir + "goalkeepers_df.csv")
 
