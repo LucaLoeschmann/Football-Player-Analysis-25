@@ -314,6 +314,15 @@ outfield_df, goalkeeper_df = map(aggregate_player_data, [outfield_df, goalkeeper
 for df in [outfield_df, goalkeeper_df]:
     df["Player Info"] = df.apply(lambda row: f"{row['Player Name']} ({row['Team']}, {row['Position']})", axis=1)
 
+# List of negative stats (higher value is worse)
+negative_stats = [
+    "Yellow Cards", "Red Cards", "Errors", "Miscontrols", "Dispossessed", "Second Yellow Cards", 
+    "Fouls Commited", "Offsides", "Penalty Kicks Conceded", "Own Goals", "Aerials Lost", 
+    "Goals Against", "Goals Against/90", "Penalty Kicks Allowed", "Penalty Kicks Missed", 
+    "Free Kick Goals Against", "Corner Kick Goals Against", "Own Goals Scored Against Goalkeeper", 
+    "Shots on Target Against"
+]
+
 # Streamlit UI
 st.title("⚽ Head-to-Head Player Comparison")
 
@@ -364,28 +373,39 @@ stat_type = st.radio("Select Data Type", ["Raw Stats", "Per 90 Minutes"])
 
 # Convert to per 90 stats if selected
 if stat_type == "Per 90 Minutes":
-    for col in stat_columns:
-        df_used[col] = df_used[col] / df_used['90s'].replace(0, np.nan)
+    for col in selected_stats:
+        # Skip columns that are already per 90 minutes stats (contains ' per 90s' or '/90')
+        if " per 90s" not in col and "/90" not in col:
+            # Divide stats by the specific player's 90s value (row-wise)
+            df_used[col] = df_used.apply(lambda row: row[col] / row["90s"] if row["90s"] != 0 else np.nan, axis=1)
 
 # Filter selected players and create comparison table
 player_data = df_used[df_used["Player Name"].isin(selected_players)]
 comparison_df = player_data.set_index("Player Name")[selected_stats].T
 
-# Keep original data types (integers stay integers, floats keep 1 decimal)
-def format_number(val):
-    return f"{val:.1f}" if isinstance(val, float) else val
+# Keep original data types (integers stay integers, floats keep 1 decimal, per 90s with 2 decimals)
+def format_number(val, per_90=False):
+    return f"{val:.2f}" if per_90 else f"{val:.1f}" if isinstance(val, float) else val
 
-comparison_df = comparison_df.applymap(format_number)
+# Apply formatting for each stat
+comparison_df = comparison_df.applymap(lambda val: format_number(val, per_90=(stat_type == "Per 90 Minutes")))
 
 # Format table column names
 comparison_df.columns = [f"{player} ({df_used[df_used['Player Name'] == player]['Team'].values[0]}, {df_used[df_used['Player Name'] == player]['Position'].values[0]})"
                          for player in comparison_df.columns]
 
-# Highlight best values
-
+# Highlight best values (positive stats - green, negative stats - red, no color for equal values)
 def highlight_best(s):
-    max_val = s.max()
-    return ['background-color: lightgreen' if v == max_val else '' for v in s]
+    is_negative = s.name in negative_stats
+    max_val = s.max() if not is_negative else s.min()
+    
+    # Only highlight when the values are different
+    return [
+        'background-color: lightgreen' if v == max_val and s.nunique() > 1 else
+        'background-color: lightcoral' if (is_negative and v == max_val) and s.nunique() > 1 else
+        ''  # No color for equal values
+        for v in s
+    ]
 
 # Display comparison table
 if not selected_players:
