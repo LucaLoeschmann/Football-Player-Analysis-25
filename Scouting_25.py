@@ -292,10 +292,6 @@ def main():
 if __name__ == "__main__":
     main()
 
-import streamlit as st
-import pandas as pd
-import numpy as np
-
 # File paths
 data_dir = "data/"
 outfield_df = pd.read_csv(data_dir + "outfield_df.csv")
