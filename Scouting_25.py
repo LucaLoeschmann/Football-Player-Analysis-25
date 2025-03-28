@@ -13,13 +13,29 @@ outfield_file_path = data_dir + "outfield_df.parquet"
 goalkeeper_combined_file_path = data_dir + "goalkeeper_combined_df.parquet"
 goalkeeper_file_path = data_dir + "goalkeepers_df.parquet"
 
-# Load datasets
+# Load datasets - cache the data loading process for all files at once
 @st.cache_data
-def load_data(filepath):
-    return pd.read_parquet(filepath, engine="fastparquet")
+def load_all_data():
+    combined_df = pd.read_parquet(combined_file_path, engine="fastparquet")
+    goalkeeper_combined_df = pd.read_parquet(goalkeeper_combined_file_path, engine="fastparquet")
+    outfield_df = pd.read_parquet(outfield_file_path, engine="fastparquet")
+    goalkeeper_df = pd.read_parquet(goalkeeper_file_path, engine="fastparquet")
+    return combined_df, goalkeeper_combined_df, outfield_df, goalkeeper_df
 
-goalkeeper_combined_df = load_data(goalkeeper_combined_file_path)
-combined_df = load_data(combined_file_path)
+# Load all data into variables at once
+combined_df, goalkeeper_combined_df, outfield_df, goalkeeper_df = load_all_data()
+
+# Function to return the correct dataframe based on input type
+def get_dataframe(type_):
+    if type_ == "General Players":
+        return combined_df
+    elif type_ == "Goalkeepers Combined":
+        return goalkeeper_combined_df
+    elif type_ == "Outfield Players":
+        return outfield_df
+    elif type_ == "Goalkeepers":
+        return goalkeeper_df
+    return None
 
 # Radar chart columns for outfield players and goalkeepers
 radar_columns_outfield = [
@@ -36,6 +52,7 @@ radar_columns_goalkeepers = [
     "Average Distance of Defensive Action"
 ]
 
+@st.cache_data
 def get_similar_players_cosine(selected_player, df, n_top=10):
     df = df.set_index('Player Name')
     features = df.select_dtypes(include=[np.number]).drop(columns=['Age'])
@@ -71,6 +88,7 @@ def get_similar_players_cosine(selected_player, df, n_top=10):
     similar_players = similar_players[['Rank', 'Player Name', 'Position', 'Team', 'Competition', 'Age', 'Nationality']]
     return similar_players
 
+
 def consolidate_player_data(df):
     consolidated_df = df.groupby('Player Name').agg({
         'Position': 'first',
@@ -82,6 +100,7 @@ def consolidate_player_data(df):
     }).reset_index()
     return consolidated_df
 
+@st.cache_data
 def apply_filters(df, apply_age_filter, age_range, apply_nationality_filter, nationalities, apply_competition_filter, competition):
     # Apply filters to the dataset
     if apply_age_filter:
@@ -92,7 +111,10 @@ def apply_filters(df, apply_age_filter, age_range, apply_nationality_filter, nat
 
     if apply_competition_filter and competition:
         # Split the competitions for each player and filter accordingly
-        df['Competition'] = df['Competition'].apply(lambda comps: comps.split(', ') if isinstance(comps, str) else [])
+        # Ensure the 'Competition' column is split into lists of competitions
+        df['Competition'] = df['Competition'].apply(
+            lambda comps: comps.split(', ') if isinstance(comps, str) else (comps if isinstance(comps, list) else [])
+        )
         # Filter players based on whether they are involved in any of the selected competitions
         df = df[df['Competition'].apply(lambda comps: any(league in comps for league in competition))]
 
@@ -260,17 +282,23 @@ def main():
 
     data_type = st.sidebar.radio("Select player type:", ["Outfield Players", "Goalkeepers"])
 
+    # Cached function to load data
+    # Caching only once for efficient use
+    @st.cache_data
+    def load_data(filepath):
+        return pd.read_parquet(filepath, engine="pyarrow")
+
+    # Load DataFrame for selected type
     if data_type == "Outfield Players":
         radar_columns = radar_columns_outfield
-        df = pd.read_parquet(outfield_file_path)
+        df = load_data(outfield_file_path)  # <-- optimized, cached data loading
     elif data_type == "Goalkeepers":
         radar_columns = radar_columns_goalkeepers
-        df = pd.read_parquet(goalkeeper_file_path)
-
-    if '90s' not in df.columns:
-        st.error("The DataFrame does not contain a '90s' column.")
-        return
-    
+        df = load_data(goalkeeper_file_path)  # <-- optimized, cached data loading
+        if '90s' not in df.columns:
+            st.error("The DataFrame does not contain a '90s' column.")
+            return
+        
     df_per90 = calculate_per90_stats(df, radar_columns)
     radar_columns_per90 = [col + '_per90' if col not in ["Save Percentage", "Penalty Kicks Save Percentaage", "Clean Sheet Percentage", "Launches Completion Percentage", "Crosses Stopped Percentage"] else col for col in radar_columns]
     df_percentiles = calculate_percentiles(df_per90, radar_columns_per90)
@@ -303,6 +331,7 @@ outfield_df = pd.read_parquet(data_dir + "outfield_df.parquet")
 goalkeeper_df = pd.read_parquet(data_dir + "goalkeepers_df.parquet")
 
 # Aggregate player data
+@st.cache_data
 def aggregate_player_data(df):
     return df.groupby("Player Name").agg({
         "Position": "first",
@@ -386,17 +415,21 @@ if stat_type == "Per 90 Minutes":
                 # Divide stats by the specific player's 90s value (row-wise)
                 df_used[col] = df_used.apply(lambda row: row[col] / row["90s"] if row["90s"] != 0 else np.nan, axis=1)
 
-
 # Filter selected players and create comparison table
-player_data = df_used[df_used["Player Name"].isin(selected_players)]
-comparison_df = player_data.set_index("Player Name")[selected_stats].T
+@st.cache_data
+def get_filtered_player_data(df, selected_players, selected_stats):
+    """Retrieve and format the comparison table for selected players."""
+    player_data = df[df["Player Name"].isin(selected_players)]
+    comparison_df = player_data.set_index("Player Name")[selected_stats].T
 
-# Keep original data types (integers stay integers, floats keep 1 decimal, per 90s with 2 decimals)
-def format_number(val, per_90=False):
-    return f"{val:.2f}" if per_90 else f"{val:.1f}" if isinstance(val, float) else val
+    def format_number(val):
+        """Format numbers: floats with 1 decimal, per 90s with 2 decimals."""
+        return f"{val:.2f}" if isinstance(val, float) and ("90" in selected_stats or "Per 90" in selected_stats) else f"{val:.1f}" if isinstance(val, float) else val
 
-# Apply formatting for each stat
-comparison_df = comparison_df.applymap(lambda val: format_number(val, per_90=(stat_type == "Per 90 Minutes")))
+    return comparison_df.applymap(format_number)
+
+# Use the optimized function
+comparison_df = get_filtered_player_data(df_used, selected_players, selected_stats)
 
 # Format table column names
 comparison_df.columns = [f"{player} ({df_used[df_used['Player Name'] == player]['Team'].values[0]}, {df_used[df_used['Player Name'] == player]['Position'].values[0]})"
