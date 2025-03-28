@@ -381,8 +381,11 @@ if stat_type == "Per 90 Minutes":
     for col in selected_stats:
         # Skip columns that are already per 90 minutes stats (contains ' per 90s' or '/90')
         if " per 90s" not in col and "/90" not in col:
-            # Divide stats by the specific player's 90s value (row-wise)
-            df_used[col] = df_used.apply(lambda row: row[col] / row["90s"] if row["90s"] != 0 else np.nan, axis=1)
+            # Skip percentage columns (assuming percentage columns have "Percentage" in their names)
+            if "Percentage" not in col:
+                # Divide stats by the specific player's 90s value (row-wise)
+                df_used[col] = df_used.apply(lambda row: row[col] / row["90s"] if row["90s"] != 0 else np.nan, axis=1)
+
 
 # Filter selected players and create comparison table
 player_data = df_used[df_used["Player Name"].isin(selected_players)]
