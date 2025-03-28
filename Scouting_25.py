@@ -6,15 +6,15 @@ from sklearn.metrics.pairwise import cosine_similarity
 from scipy.stats import percentileofscore
 
 # File paths
-data_dir =  "data/"
-combined_file_path = data_dir + "combined_df.csv"
-outfield_file_path = data_dir + "outfield_df.csv"
-goalkeeper_combined_file_path = data_dir + "goalkeeper_combined_df.csv"
-goalkeeper_file_path = data_dir + "goalkeepers_df.csv"
+data_dir = "data/"
+combined_file_path = data_dir + "combined_df.parquet"
+outfield_file_path = data_dir + "outfield_df.parquet"
+goalkeeper_combined_file_path = data_dir + "goalkeeper_combined_df.parquet"
+goalkeeper_file_path = data_dir + "goalkeepers_df.parquet"
 
 # Load datasetsy
-goalkeeper_combined_df = pd.read_csv(goalkeeper_combined_file_path)
-combined_df = pd.read_csv(combined_file_path)
+goalkeeper_combined_df = pd.read_parquet(goalkeeper_combined_file_path)
+combined_df = pd.read_parquet(combined_file_path)
 
 # Radar chart columns for outfield players and goalkeepers
 radar_columns_outfield = [
@@ -257,10 +257,10 @@ def main():
 
     if data_type == "Outfield Players":
         radar_columns = radar_columns_outfield
-        df = pd.read_csv(outfield_file_path)
+        df = pd.read_parquet(outfield_file_path)
     elif data_type == "Goalkeepers":
         radar_columns = radar_columns_goalkeepers
-        df = pd.read_csv(goalkeeper_file_path)
+        df = pd.read_parquet(goalkeeper_file_path)
 
     if '90s' not in df.columns:
         st.error("The DataFrame does not contain a '90s' column.")
@@ -293,9 +293,9 @@ if __name__ == "__main__":
     main()
 
 # File paths
-data_dir = "data/"
-outfield_df = pd.read_csv(data_dir + "outfield_df.csv")
-goalkeeper_df = pd.read_csv(data_dir + "goalkeepers_df.csv")
+data_dir = "data"
+outfield_df = pd.read_parquet(data_dir + "outfield_df.parquet")
+goalkeeper_df = pd.read_parquet(data_dir + "goalkeepers_df.parquet")
 
 # Aggregate player data
 def aggregate_player_data(df):
