@@ -4,6 +4,7 @@ import numpy as np
 import plotly.graph_objects as go
 from sklearn.metrics.pairwise import cosine_similarity
 from scipy.stats import percentileofscore
+import fastparquet  
 
 # File paths
 data_dir = "data/"
@@ -12,9 +13,13 @@ outfield_file_path = data_dir + "outfield_df.parquet"
 goalkeeper_combined_file_path = data_dir + "goalkeeper_combined_df.parquet"
 goalkeeper_file_path = data_dir + "goalkeepers_df.parquet"
 
-# Load datasetsy
-goalkeeper_combined_df = pd.read_parquet(goalkeeper_combined_file_path)
-combined_df = pd.read_parquet(combined_file_path)
+# Load datasets
+@st.cache_data
+def load_data(filepath):
+    return pd.read_parquet(filepath, engine="fastparquet")
+
+goalkeeper_combined_df = load_data(goalkeeper_combined_file_path)
+combined_df = load_data(combined_file_path)
 
 # Radar chart columns for outfield players and goalkeepers
 radar_columns_outfield = [
@@ -293,7 +298,7 @@ if __name__ == "__main__":
     main()
 
 # File paths
-data_dir = "data"
+data_dir = "data/"
 outfield_df = pd.read_parquet(data_dir + "outfield_df.parquet")
 goalkeeper_df = pd.read_parquet(data_dir + "goalkeepers_df.parquet")
 
@@ -407,9 +412,12 @@ def highlight_best(s):
         for v in s
     ]
 
+# Apply the styling row-wise (axis=1) since stats are rows
+styled_df = comparison_df.style.apply(highlight_best, axis=1)
+
 # Display comparison table
 if not selected_players:
     st.warning("⚠️ Please select at least one player to compare.")
 else:
     st.write("### 🆚 Player Comparison")
-    st.dataframe(comparison_df.style.apply(highlight_best, axis=1))
+    st.dataframe(styled_df)
