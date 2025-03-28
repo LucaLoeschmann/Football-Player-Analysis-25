@@ -14,12 +14,15 @@ goalkeeper_combined_file_path = data_dir + "goalkeeper_combined_df.parquet"
 goalkeeper_file_path = data_dir + "goalkeepers_df.parquet"
 
 # Load datasets - cache the data loading process for all files at once
-@st.cache_data
+@st.cache_data(ttl=3600)  # Cache for 1 hour (3600 seconds)
 def load_all_data():
+    # Read parquet files
     combined_df = pd.read_parquet(combined_file_path, engine="fastparquet")
     goalkeeper_combined_df = pd.read_parquet(goalkeeper_combined_file_path, engine="fastparquet")
     outfield_df = pd.read_parquet(outfield_file_path, engine="fastparquet")
     goalkeeper_df = pd.read_parquet(goalkeeper_file_path, engine="fastparquet")
+    
+    # Return all DataFrames as a tuple
     return combined_df, goalkeeper_combined_df, outfield_df, goalkeeper_df
 
 # Load all data into variables at once
