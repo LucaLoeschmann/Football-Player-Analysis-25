@@ -6,6 +6,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from scipy.stats import percentileofscore
 import fastparquet  
 
+
 # File paths
 data_dir = "data/"
 combined_file_path = data_dir + "combined_df.parquet"
@@ -30,7 +31,7 @@ combined_df, goalkeeper_combined_df, outfield_df, goalkeeper_df = load_all_data(
 
 # Function to return the correct dataframe based on input type
 def get_dataframe(type_):
-    if type_ == "General Players":
+    if type_ == "Outfield Players":
         return combined_df
     elif type_ == "Goalkeepers Combined":
         return goalkeeper_combined_df
@@ -189,17 +190,25 @@ def create_radar_plot(df_percentiles, player_names, radar_columns):
     st.plotly_chart(fig)
 
 def main():
-    st.title("Football Recommendation System")
+    st.title("Football Player Analysis Tool")
 
-    # Recommendation section for General Players or Goalkeepers
+    st.markdown("""
+    This app aims to be a comprehensive football analysis tool, enabling you to find similar players, directly compare the stats of up to 5 players, and visualize key performance metrics for a clearer understanding of their overall strengths and weaknesses.
+
+    ### Limitations:
+    - Only statistics from the League games of the top 5 Leagues are included.
+    - For the similar players model only players that played more than 270 minutes (equivalent to 3 full games) meet the requirements.
+    """)
+
+    # Recommendation section for Outfield Players or Goalkeepers
     recommendation_type = st.selectbox(
         "Choose the type of recommendation:", 
-        ["General Players", "Goalkeepers"]
+        ["Outfield Players", "Goalkeepers"]
     )
 
-    if recommendation_type in ["General Players", "Goalkeepers"]:
+    if recommendation_type in ["Outfield Players", "Goalkeepers"]:
         # Choose the appropriate dataframe based on the selection
-        if recommendation_type == "General Players":
+        if recommendation_type == "Outfield Players":
             df = combined_df
             consolidated_df = consolidate_player_data(combined_df)
         else:  # Goalkeepers
@@ -361,7 +370,7 @@ negative_stats = [
 ]
 
 # Streamlit UI
-st.title("⚽ Head-to-Head Player Comparison")
+st.title("Head-to-Head Player Comparison")
 
 # Select player type
 player_type = st.radio("Select Player Type", ["Outfield Players", "Goalkeepers"])
@@ -388,7 +397,7 @@ selected_players = [player_name_map[info] for info in selected_players_info]
 
 # Display player details side by side
 if selected_players:
-    st.markdown("### 🏷️ Player Information")
+    st.markdown("### Player Information")
     cols = st.columns(len(selected_players))
     details_df = df_used[df_used["Player Name"].isin(selected_players)]
     
@@ -458,5 +467,5 @@ styled_df = comparison_df.style.apply(highlight_best, axis=1)
 if not selected_players:
     st.warning("⚠️ Please select at least one player to compare.")
 else:
-    st.write("### 🆚 Player Comparison")
+    st.write("### Player Comparison")
     st.dataframe(styled_df)
