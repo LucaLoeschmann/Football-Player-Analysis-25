@@ -1,6 +1,6 @@
 # ⚽ Football Player Analysis Tool
 
-## 🔗 Live App  
+## Streamlit App  
 👉 [Click here to try the app](https://scouting25.streamlit.app/)
 
 ## 🌟 Table of Contents
