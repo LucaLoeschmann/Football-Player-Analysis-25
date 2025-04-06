@@ -89,7 +89,7 @@ The Streamlit app offers:
 - Stats used for similarity are filtered to avoid noise but may still reflect positional bias
 - Penalty-related stats are excluded or downweighted due to team-dependence
 
-### Future Enhancements
+### Future Improvements
 - Explore a hybrid similarity metric (e.g., cosine + Euclidean)
 - Add role-specific models (e.g., separate models for CBs, Wingers, etc.)
 - Add more leagues
