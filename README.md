@@ -15,9 +15,10 @@
 
 ## 🎯 Project Overview
 
-As an avid football fan with a strong interest in statistics, I wanted to dig deeper and create a tool that would help me compare players in different ways — all in one place. While there are already several professional websites offering great insights, I often felt limited by the typical head-to-head comparisons of just a few stats between two players.
+As an avid football fan with a strong interest in statistics, I wanted to dig deeper and create a tool that would help me compare players in different ways. While there are already several professional websites offering great insights, I often felt limited by the typical head-to-head comparisons —, which led me to create something that brings together all the different aspects I’m personally interested in, all in one place.
 
-I wasn’t just interested in the raw numbers, but also in how data could enhance our understanding of player performance. I wanted to apply **unsupervised machine learning** to uncover statistical similarities between players — not based on gut feeling, but on actual performance metrics. I was especially curious to see whether these statistical similarities would match my own perceptions, or if the data would challenge what I thought I knew.
+
+I wasn’t just interested in the raw numbers, but also in how data could enhance our understanding of player performance. I wanted to apply **unsupervised machine learning** to uncover statistical similarities between players, not based on gut feeling, but on actual performance metrics. I was especially curious to see whether these statistical similarities would match my own perceptions, or if the data would challenge what I thought I knew.
 
 ➡️ You can explore the app here: [https://scouting25.streamlit.app](https://scouting25.streamlit.app)
 
@@ -87,7 +88,6 @@ The Streamlit app offers:
 - Only includes league data from the **Top 5 European Leagues**
 - Only players with **at least 270 minutes played** are considered
 - Stats used for similarity are filtered to avoid noise but may still reflect positional bias
-- Penalty-related stats are excluded or downweighted due to team-dependence
 
 ### Future Improvements
 - Explore a hybrid similarity metric (e.g., cosine + Euclidean)
