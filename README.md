@@ -3,8 +3,8 @@
 ## 🔗 Streamlit App  
 👉 [Click here to try the app](https://scouting25.streamlit.app/)
 
-## 🌟 Table of Contents
-- [🌟 Table of Contents](#-table-of-contents)
+## 📚 Table of Contents
+- [📚 Table of Contents](#-table-of-contents)
 - [🎯 Project Overview](#-project-overview)
 - [🔄 Data Collection & Preprocessing](#-data-collection--preprocessing)
 - [💡 App Features & Functionality](#-app-features--functionality)
