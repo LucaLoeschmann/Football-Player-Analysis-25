@@ -42,10 +42,6 @@ I merged the individual dataframes into one combined dataset and then split it i
 - **Outfield players**
 - **Goalkeepers**
 
-These two categories were handled separately due to their vastly different statistical profiles. The final datasets contain:
-- 138 performance metrics for outfield players  
-- 62 performance metrics for goalkeepers
-
 I excluded "Playing Time" stats as these are mostly team-based stats that do not necessarily reflect individual player quality.
 
 ### Similarity Model Preprocessing
