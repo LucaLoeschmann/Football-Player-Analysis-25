@@ -85,7 +85,7 @@ The Streamlit app offers:
 
 ### Current Limitations
 - Only includes league data from the **Top 5 European Leagues**
-- Only players with **at least 270 minutes played** are considered
+- Only players with **at least 350 minutes played** are considered
 - Stats used for similarity are filtered to avoid noise but may still reflect positional bias
 
 ### Future Improvements
