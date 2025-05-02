@@ -197,7 +197,7 @@ def main():
 
     ### Limitations:
     - Only statistics from the League games of the top 5 Leagues are included.
-    - For the similar players model only players that played more than 350 minutes (equivalent to 5 full games) meet the requirements.
+    - For the similar players model only players that played more than 450 minutes (equivalent to 5 full games) meet the requirements.
     """)
 
     # Recommendation section for Outfield Players or Goalkeepers
