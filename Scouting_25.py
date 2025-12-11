@@ -190,7 +190,7 @@ def create_radar_plot(df_percentiles, player_names, radar_columns):
     st.plotly_chart(fig)
 
 def main():
-    st.title("Football Player Analysis Tool")
+    st.title("Football Player Analysis Tool 24-25")
 
     st.markdown("""
     This app aims to be a comprehensive football analysis tool, enabling you to find similar players, directly compare the stats of up to 5 players, and visualize key performance metrics for a clearer understanding of their overall strengths and weaknesses.
