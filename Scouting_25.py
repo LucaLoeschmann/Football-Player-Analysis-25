@@ -193,7 +193,7 @@ def main():
     st.title("Football Player Analysis Tool 24-25")
 
     st.markdown("""
-     ### Football Player Analysis 24-25
+        ### Football Player Analysis & Scouting Tool
         
         This app focuses on identifying **players with similar playing styles and tactical roles**, rather than comparing raw output 
         
