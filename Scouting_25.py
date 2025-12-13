@@ -192,25 +192,25 @@ def create_radar_plot(df_percentiles, player_names, radar_columns):
 def main():
     st.title("Football Player Analysis Tool 24-25")
 
-   st.markdown("""
-    ### Football Player Analysis & Scouting Tool
-    
-    This app focuses on identifying **players with similar playing styles and tactical roles**, rather than comparing raw output 
-    
-    Similarity is based on **per-90 normalized, role-defining metrics** (e.g. ball progression, defensive involvement, chance creation)
-    
-    You can:
-    - find **stylistically similar players**,
-    - compare up to **5 players head-to-head**,
-    - explore player profiles using **radar charts based on percentile rankings**.
-    
-    ⚠️ *Radar charts appear further down the page after generating — please scroll to view them.*
-    
-    **Limitations**
-    - Top 5 European leagues only  
-    - Minimum 450 minutes played  
-    - Primary focus on **style and role**, not performance prediction
-    """)
+    st.markdown("""
+     ### Football Player Analysis 24-25
+        
+        This app focuses on identifying **players with similar playing styles and tactical roles**, rather than comparing raw output 
+        
+        Similarity is based on **per-90 normalized, role-defining metrics** (e.g. ball progression, defensive involvement, chance creation)
+        
+        You can:
+        - find **stylistically similar players**,
+        - compare up to **5 players head-to-head**,
+        - explore player profiles using **radar charts based on percentile rankings**.
+        
+        ⚠️ *Radar charts appear further down the page after generating — please scroll to view them.*
+        
+        **Limitations**
+        - Top 5 European leagues only  
+        - Minimum 450 minutes played  
+        - Primary focus on **style and role**, not performance prediction
+        """)
 
     # Recommendation section for Outfield Players or Goalkeepers
     recommendation_type = st.selectbox(
