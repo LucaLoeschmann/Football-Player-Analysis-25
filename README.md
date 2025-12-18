@@ -1,9 +1,8 @@
 # ⚽ Football Player Analysis Tool
 
-## 🔗 Streamlit App  
-👉 [Click here to try the app](https://scouting25.streamlit.app/)
-
 ## 📚 Table of Contents
+- [TL;DR](#tldr)
+- [🔗 Streamlit App](#-streamlit-app)
 - [🎯 Project Overview](#-project-overview)
 - [🔄 Data Collection & Preprocessing](#-data-collection--preprocessing)
 - [💡 App Features & Functionality](#-app-features--functionality)
@@ -12,92 +11,104 @@
 
 ---
 
+## TL;DR
+
+- Interactive football analytics app built with **Streamlit**
+- Focus on **player style and tactical role**, not raw statistical output
+- Uses **per-90 normalised, role-defining metrics**
+- Player similarity identified via **unsupervised learning (PCA + cosine similarity)**
+- Designed for **player type comparison and replacement analysis**
+- Includes:
+  - Similar Player Finder
+  - Percentile-based Radar Charts
+  - Custom Head-to-Head Comparisons
+- Data sourced from **FBref (Top 5 European leagues)**
+
+---
+
+## 🔗 Streamlit App
+👉 https://scouting25.streamlit.app/
+
+---
+
 ## 🎯 Project Overview
 
-As an avid football fan with a strong interest in statistics, I wanted to dig deeper and create a tool that would help me compare players in different ways. While there are already several professional websites offering great insights, I often felt limited by the typical head-to-head comparisons, which led me to create something that brings together all the different aspects I’m personally interested in, all in one place.
+This project focuses on analysing football players based on their **playing style and tactical role**, rather than raw statistical output alone.
 
+The core idea is **player type comparison and replacement**: identifying players who behave similarly on the pitch, even if their statistical production differs due to team context, tactical system or role within the squad. This makes the tool particularly useful when evaluating potential replacements across different teams and leagues.
 
-I wasn’t just interested in the raw numbers, but also in how data could enhance our understanding of player performance. I wanted to apply **unsupervised machine learning** to uncover statistical similarities between players, not based on gut feeling, but on actual performance metrics. I was especially curious to see whether these statistical similarities would match my own perceptions, or if the data would challenge what I thought I knew.
+Traditional player comparisons often rely on metrics such as goals, assists or defensive totals. However, these numbers are highly **context-dependent** and strongly influenced by factors like possession share, team strength and tactical instructions. As a result, raw output can be misleading when comparing players from different environments.
 
-➡️ You can explore the app here: [https://scouting25.streamlit.app](https://scouting25.streamlit.app)
+To address this, all comparisons in this app are based on **per-90 normalised, role-defining metrics** such as ball progression, defensive involvement and chance creation. This shifts the focus from *how much* a player produces to *how* a player contributes within a team structure.
 
-The general concept was to create:
-- A **Similar Player Finder** with filters for age, nationality, and competition
-- A **Head-to-Head Comparison** tool for custom stat-based matchups
-- A **Radar Chart Visualizer** to intuitively compare multiple players across multiple dimensions
-
-The dataset is focused on **league matches** from the **Top 5 European leagues** (Premier League, Serie A, La Liga, Bundesliga, Ligue 1).
+Unsupervised machine learning is used to uncover statistical similarities without relying on predefined roles or positions. The goal is not to predict performance, but to identify **tactical profiles and playing tendencies**, allowing for more nuanced player evaluation.
 
 ---
 
 ## 🔄 Data Collection & Preprocessing
 
-I scraped player statistics from the [FBref Big 5 European Leagues Stats page](https://fbref.com/en/comps/Big5/Big-5-European-Leagues-Stats). After extracting the individual stat tables, I cleaned and processed the data to make it usable while retaining the original raw values.
+Player statistics were scraped from the  
+[FBref Big 5 European Leagues Stats page](https://fbref.com/en/comps/Big5/Big-5-European-Leagues-Stats).
 
-### Column Naming
-FBref uses short codes for stats that are displayed in the tables, which I expanded where necessary to improve clarity.
+After extracting the individual stat tables, the data was cleaned and processed while retaining the original raw values.
 
-### Dataset Organization
-I merged the individual dataframes into one combined dataset and then split it into two separate dataframes:
-- **Outfield players**
-- **Goalkeepers**
+### Dataset Structure
+- Data is limited to **league matches** from the **Top 5 European leagues**
+- Players are split into two groups:
+  - **Outfield players**
+  - **Goalkeepers**
 
-I excluded "Playing Time" stats as these are mostly team-based stats that do not necessarily reflect individual player quality.
+Playing-time and team-level statistics were excluded where they did not meaningfully represent individual player behaviour.
 
-### Similarity Model Preprocessing
-For the similarity model, more preprocessing was required to reduce noise. Some stats were dropped if they were redundant, overly dependent on role-specific factors (e.g., being the team's penalty taker), or influenced by external decisions.
+### Preprocessing for Similarity Modelling
+To reduce noise and contextual bias:
+- Players were required to have played **at least the equivalent of 5 full matches**
+- Redundant or outcome-heavy metrics were removed
+- **RobustScaler** was used to normalise features while limiting the impact of outliers
+- **PCA** was applied to reduce dimensionality while retaining ~90% of explained variance
 
-To reduce outliers, I:
-- Set a threshold requiring each player to have played the equivalent of at least 3 full games
-- Used `RobustScaler` to normalize data while minimizing the influence of extreme values
-- Applied **PCA** to reduce dimensionality, retaining **90% of the explained variance**
-
-For measuring similarity, I used **cosine similarity**, which compares the angle between vectors rather than absolute values. Although Euclidean distance might seem intuitive for comparing totals, cosine similarity proved more effective at capturing stylistic similarity. In the future, I might experiment with combining both methods.
+Player similarity is calculated using **cosine similarity**, which compares the *direction* of statistical profiles rather than absolute magnitude. This approach proved more effective than distance-based methods for capturing stylistic similarity.
 
 ---
 
 ## 💡 App Features & Functionality
 
-The Streamlit app offers:
-
-### 🔍 Similar Player Finder
-- Choose player type (Outfield or Goalkeeper)
-- Apply filters: Age, Nationality, Competition
-- Get top N similar players based on PCA-transformed stats and cosine similarity
-
-### 🆚 Head-to-Head Comparison
-- Compare up to 5 players across selected metrics
-- Choose between raw stats or per 90 minutes
-- Highlights best values automatically 
+### 🔎 Similar Player Finder
+- Select player type (Outfield / Goalkeeper)
+- Filter by age, nationality and competition
+- Identify stylistically similar players based on PCA-transformed features
 
 ### 📊 Radar Chart Comparison
-- Visualize percentile ranks across multiple performance categories
-- Supports up to 10 players
-- Separate templates for outfield players and goalkeepers
+- Percentile-based radar charts for visual role comparison
+- Supports up to 5 players simultaneously
+- Separate radar templates for outfield players and goalkeepers
+
+### ⚔️ Head-to-Head Comparison
+- Compare up to 5 players across selected metrics
+- Toggle between raw stats and per-90 values
+- Automatically highlights best and worst values per statistic
 
 ---
 
 ## ⚠️ Limitations & Future Improvements
 
 ### Current Limitations
-- Only includes league data from the **Top 5 European Leagues**
-- Only players with **at least 350 minutes played** are considered
-- Stats used for similarity are filtered to avoid noise but may still reflect positional bias
+- Only includes league data from the **Top 5 European leagues**
+- Minimum playing time threshold applies
+- Role definitions may still show positional bias
 
-### Future Improvements
-- Explore a hybrid similarity metric (e.g., cosine + Euclidean)
-- Add role-specific models (e.g., separate models for CBs, Wingers, etc.)
-- Add more leagues
-- Take the market value of the players into account 
+### Planned Improvements
+- Role-specific similarity models (e.g. CBs, Wingers, Forwards)
+- Hybrid similarity metrics (cosine + distance-based)
+- Inclusion of additional leagues
+- Optional market value integration
 
 ---
 
 ## 📢 Disclaimer
 
-This project is intended **solely for educational and personal portfolio use**.  
+This project is intended **solely for educational and personal portfolio use**.
+
 It is **not affiliated with or endorsed by FBref.com, Sports Reference LLC, or their data providers**.
 
-Player data used in this app was sourced from publicly available web pages on FBref.com and is presented for analysis and research purposes.  
-The app does **not reproduce a complete database**, does **not offer any form of commercial service**, and is **not intended to compete with FBref or any related platform**.
-
-All data remains the intellectual property of its respective owners.
+All data used in this project was sourced from publicly available pages on FBref.com and remains the intellectual property of its respective owners.
