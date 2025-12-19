@@ -16,7 +16,7 @@ st.set_page_config(
 # Paths (Streamlit Cloud ready)
 # ----------------------------
 BASE_DIR = Path(__file__).resolve().parent
-data_dir = BASE_DIR / "data/"
+data_dir = BASE_DIR / "/Users/lucaloschmann/Desktop/FBREF Stats 24:25/"
 
 combined_file_path = data_dir / "combined_df.parquet"
 goalkeeper_combined_file_path = data_dir / "goalkeeper_combined_df.parquet"
@@ -542,8 +542,13 @@ def page_similar_players(combined_df, goalkeeper_combined_df):
         )
 
         consolidated_df = consolidated_df.copy()
-        consolidated_df["PosGroup"] = consolidated_df["Position"].apply(primary_pos)
-        consolidated_df = consolidated_df[consolidated_df["PosGroup"] != ""]
+
+        if recommendation_type == "Outfield Players":
+            consolidated_df["PosGroup"] = consolidated_df["Position"].apply(primary_pos)
+            consolidated_df = consolidated_df[consolidated_df["PosGroup"] != ""]
+        else:
+            # Goalkeepers: don't apply DF/MF/FW parsing
+            consolidated_df["PosGroup"] = "GK"
 
         player_info = (
             consolidated_df["Player Name"].astype(str)
@@ -645,7 +650,6 @@ def page_similar_players(combined_df, goalkeeper_combined_df):
 
         similar_players = get_similar_players_cosine(selected_player, filtered_df, n_top=n_top)
 
-        st.caption("Tip: You can scroll horizontally in the table (Shift + mouse wheel / trackpad).")
         st.dataframe(similar_players, hide_index=True, use_container_width=True)
 
 def page_radar(outfield_df, goalkeeper_df):
@@ -890,7 +894,6 @@ def page_head_to_head(outfield_df, goalkeeper_df):
 
         styled_df = comparison_fmt.style.apply(highlight_best, axis=1)
 
-        st.caption("Tip: You can scroll horizontally in the table (Shift + mouse wheel / trackpad).")
         st.dataframe(styled_df, use_container_width=True)
 
 def page_leaderboard(outfield_df, goalkeeper_df):
