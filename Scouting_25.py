@@ -16,7 +16,7 @@ st.set_page_config(
 # Paths (Streamlit Cloud ready)
 # ----------------------------
 BASE_DIR = Path(__file__).resolve().parent
-data_dir = BASE_DIR / "/Users/lucaloschmann/Desktop/FBREF Stats 24:25/"
+data_dir = BASE_DIR / "data/"
 
 combined_file_path = data_dir / "combined_df.parquet"
 goalkeeper_combined_file_path = data_dir / "goalkeeper_combined_df.parquet"
