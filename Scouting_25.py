@@ -455,21 +455,38 @@ def build_comparison_table(df_input, players, stats, per90):
     if len(df_player) == 0 or len(stats) == 0:
         return pd.DataFrame()
 
+    # ✅ remove duplicate players/stats (prevents non-unique columns/index)
+    players = list(dict.fromkeys([p for p in players if p is not None]))
+    stats = list(dict.fromkeys([s for s in stats if s is not None]))
+
     if per90 and "90s" not in df_player.columns:
         return pd.DataFrame()
 
-    df_show = df_player[
-        ["Player Name", "Team", "Position"]
-        + (["90s"] if "90s" in df_player.columns else [])
-        + stats
-    ].copy()
+    # build base table
+    base_cols = ["Player Name", "Team", "Position"]
+    if "90s" in df_player.columns and "90s" not in base_cols:
+        base_cols.append("90s")
 
+    keep_cols = list(dict.fromkeys(base_cols + stats))
+    keep_cols = [c for c in keep_cols if c in df_player.columns]
+
+    df_show = df_player[keep_cols].copy()
+
+    # ✅ per90 calc (don’t divide 90s or rate/avg cols)
     if per90:
+        df_show["90s"] = pd.to_numeric(df_show["90s"], errors="coerce")
         for col in stats:
-            if col != "90s" and col not in NON_AGG_SUM_COLS:
+            if col != "90s" and col in df_show.columns and col not in NON_AGG_SUM_COLS:
                 df_show[col] = np.where(df_show["90s"] > 0, df_show[col] / df_show["90s"], np.nan)
 
-    return df_show.set_index("Player Name")[stats].T
+    # ✅ comparison_df: rows = stats, cols = player names
+    comp = df_show.set_index("Player Name")[stats].T
+
+    # ✅ CRITICAL FIX for Styler: must be unique index/columns
+    comp = comp.loc[~comp.index.duplicated(keep="first")]
+    comp = comp.loc[:, ~comp.columns.duplicated(keep="first")]
+
+    return comp
 
 # ----------------------------
 # Pages
@@ -539,17 +556,16 @@ def page_similar_players(combined_df, goalkeeper_combined_df):
             aggregate_players_safely(combined_df)
             if recommendation_type == "Outfield Players"
             else aggregate_players_safely(goalkeeper_combined_df)
-        )
+        ).copy()
 
-        consolidated_df = consolidated_df.copy()
-
+        # Position group handling
         if recommendation_type == "Outfield Players":
             consolidated_df["PosGroup"] = consolidated_df["Position"].apply(primary_pos)
             consolidated_df = consolidated_df[consolidated_df["PosGroup"] != ""]
         else:
-            # Goalkeepers: don't apply DF/MF/FW parsing
             consolidated_df["PosGroup"] = "GK"
 
+        # --- Player picker ---
         player_info = (
             consolidated_df["Player Name"].astype(str)
             + " ("
@@ -607,7 +623,7 @@ def page_similar_players(combined_df, goalkeeper_combined_df):
                 )
 
             if apply_position_filter:
-                ordered = ["DF", "MF", "FW"]
+                ordered = ["DF", "MF", "FW", "GK"]
                 available = [p for p in ordered if p in consolidated_df["PosGroup"].unique()]
                 pos_groups = st.multiselect(
                     "Position group:",
@@ -644,12 +660,12 @@ def page_similar_players(combined_df, goalkeeper_combined_df):
             pos_groups,
         )
 
+        # Ensure selected player is included (even if filters exclude them)
         if selected_player not in filtered_df["Player Name"].values:
             selected_player_data = consolidated_df[consolidated_df["Player Name"] == selected_player]
             filtered_df = pd.concat([filtered_df, selected_player_data], ignore_index=True)
 
         similar_players = get_similar_players_cosine(selected_player, filtered_df, n_top=n_top)
-
         st.dataframe(similar_players, hide_index=True, use_container_width=True)
 
 def page_radar(outfield_df, goalkeeper_df):
@@ -763,8 +779,43 @@ def page_head_to_head(outfield_df, goalkeeper_df):
             horizontal=True,
         )
         df_raw = outfield_df if player_type == "Outfield Players" else goalkeeper_df
-        df_agg = aggregate_players_safely(df_raw)
+        df_agg = aggregate_players_safely(df_raw).copy()
 
+        # ✅ NEW: 90s filter (wie Leaderboard)
+        with st.expander("Filters (optional)", expanded=False):
+            apply_90s_filter = st.checkbox("Filter by Minutes (90s) Range", key="h2h_90s_chk")
+            qualified_only = st.toggle(
+                "Qualified only (min 5 full matches / 5.0 90s)",
+                value=False,
+                key="h2h_qual",
+            )
+
+            if "90s" in df_agg.columns:
+                df_agg["90s"] = pd.to_numeric(df_agg["90s"], errors="coerce")
+
+                if qualified_only:
+                    df_agg = df_agg[df_agg["90s"] >= 5.0]
+
+                if apply_90s_filter:
+                    _s90 = pd.to_numeric(df_agg["90s"], errors="coerce")
+                    _max90 = float(_s90.max(skipna=True) if _s90.notna().any() else 0.0)
+                    _max90 = max(0.0, _max90)
+
+                    h2h_90s_range = st.slider(
+                        "90s range (full matches):",
+                        min_value=0.0,
+                        max_value=float(np.ceil(_max90)),
+                        value=(0.0, float(np.ceil(_max90))),
+                        step=0.5,
+                        key="h2h_90s_rng",
+                    )
+                    lo, hi = h2h_90s_range
+                    df_agg = df_agg[(df_agg["90s"] >= lo) & (df_agg["90s"] <= hi)]
+            else:
+                if qualified_only or apply_90s_filter:
+                    st.warning("'90s' column missing – minutes filters ignored.")
+
+        # player dropdowns
         df_agg["Player Info"] = (
             df_agg["Player Name"].astype(str)
             + " ("
@@ -773,7 +824,6 @@ def page_head_to_head(outfield_df, goalkeeper_df):
             + df_agg["Position"].astype(str)
             + ")"
         )
-
         player_options = df_agg["Player Info"].tolist()
 
         p1 = st.selectbox("Select Player 1", player_options, index=None, placeholder="Choose Player 1…", key="h2h_p1")
@@ -794,6 +844,9 @@ def page_head_to_head(outfield_df, goalkeeper_df):
         name_map = dict(zip(df_agg["Player Info"], df_agg["Player Name"]))
         selected_players = [name_map[x] for x in selected_players_info if x in name_map]
 
+        # ✅ prevent duplicates (very important for Styler uniqueness)
+        selected_players = list(dict.fromkeys(selected_players))
+
         excluded_columns = [
             "Player Name",
             "Player Info",
@@ -806,8 +859,16 @@ def page_head_to_head(outfield_df, goalkeeper_df):
         ]
         stat_columns = [c for c in df_agg.columns if c not in excluded_columns]
 
+        # ✅ "90s" ist jetzt normal auswählbar, weil es NICHT mehr excluded ist
         selected_stats = st.multiselect("Select Stats to Compare", stat_columns, key="h2h_stats")
-        stat_type = st.radio("Select Data Type", ["Raw Stats", "Per 90 Minutes"], key="h2h_dtype", horizontal=True)
+        selected_stats = list(dict.fromkeys(selected_stats))  # ✅ avoid dup stats
+
+        stat_type = st.radio(
+            "Select Data Type",
+            ["Raw Stats", "Per 90 Minutes"],
+            key="h2h_dtype",
+            horizontal=True,
+        )
 
         run_h2h = st.button(
             "Build Comparison Table",
@@ -823,7 +884,7 @@ def page_head_to_head(outfield_df, goalkeeper_df):
             return
 
         if not run_h2h:
-            st.info("Choose players + stats on the left, then click **Build Comparison Table**.")
+            st.info("Choose players + stats, then click **Build Comparison Table**.")
             return
 
         comparison_df = build_comparison_table(
@@ -836,6 +897,10 @@ def page_head_to_head(outfield_df, goalkeeper_df):
         if comparison_df.empty:
             st.info("Select stats to display the comparison table.")
             return
+
+        # ✅ ABSOLUTE safety: Styler requires unique index/cols
+        comparison_df = comparison_df.loc[~comparison_df.index.duplicated(keep="first")]
+        comparison_df = comparison_df.loc[:, ~comparison_df.columns.duplicated(keep="first")]
 
         negative_stats = [
             "Yellow Cards",
@@ -875,13 +940,18 @@ def page_head_to_head(outfield_df, goalkeeper_df):
             is_negative = stat_name in negative_stats
 
             row_num = comparison_df.loc[stat_name]
+            if isinstance(row_num, pd.DataFrame):  # safety
+                row_num = row_num.iloc[0]
+
+            row_num = pd.to_numeric(pd.Series(row_num), errors="coerce")
+
             if row_num.nunique(dropna=True) <= 1:
                 return [""] * len(row_display)
 
             best_val = row_num.min(skipna=True) if is_negative else row_num.max(skipna=True)
 
             styles = []
-            for v in row_num:
+            for v in row_num.values:
                 if pd.isna(v):
                     styles.append("")
                 elif (not is_negative) and v == best_val:
@@ -893,7 +963,6 @@ def page_head_to_head(outfield_df, goalkeeper_df):
             return styles
 
         styled_df = comparison_fmt.style.apply(highlight_best, axis=1)
-
         st.dataframe(styled_df, use_container_width=True)
 
 def page_leaderboard(outfield_df, goalkeeper_df):
@@ -1003,7 +1072,7 @@ def page_leaderboard(outfield_df, goalkeeper_df):
 
     with right:
         if not run:
-            st.info("Select filters + a stat, then click **Build Leaderboard**.")
+            st.info("Select filters + stat, then click **Build Leaderboard**.")
             return
 
         if stat is None:
