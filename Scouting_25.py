@@ -768,7 +768,7 @@ def page_radar(outfield_df, goalkeeper_df):
         create_radar_plot_from_percentiles(df_pct, selected_players, radar_columns)
 
 def page_head_to_head(outfield_df, goalkeeper_df):
-    st.header("⚔️ Head-to-Head Player Comparison")
+    st.header("🆚 Head-to-Head Player Comparison")
     left, right = st.columns([1, 1])
 
     with left:
@@ -1154,7 +1154,7 @@ def main():
     page_intro()
     st.divider()
 
-    tab1, tab2, tab3, tab4 = st.tabs(["🔎 Similar Players", "📊 Radar", "⚔️ Head-to-Head", "🏆 Leaderboard"])
+    tab1, tab2, tab3, tab4 = st.tabs(["🔎 Similar Players", "📊 Radar", "🆚 Head-to-Head", "🏆 Leaderboard"])
 
     with tab1:
         page_similar_players(combined_df, goalkeeper_combined_df)
