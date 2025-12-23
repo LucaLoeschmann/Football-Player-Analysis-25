@@ -1,13 +1,18 @@
 # ⚽ Football Player Analysis Tool
 
 ## 📚 Table of Contents
-- [TL;DR](#tldr)
 - [🔗 Streamlit App](#-streamlit-app)
+- [TL;DR](#tldr)
 - [🎯 Project Overview](#-project-overview)
 - [🔄 Data Collection & Preprocessing](#-data-collection--preprocessing)
 - [💡 App Features & Functionality](#-app-features--functionality)
 - [⚠️ Limitations & Future Improvements](#️-limitations--future-improvements)
 - [📢 Disclaimer](#-disclaimer)
+
+---
+
+## 🔗 Streamlit App
+👉 https://scouting25.streamlit.app/
 
 ---
 
@@ -24,11 +29,6 @@
   - Custom Head-to-Head Comparisons
   - Leaderboard of players with the highest values of selected metrics
 - Data sourced from **FBref (Top 5 European leagues)**
-
----
-
-## 🔗 Streamlit App
-👉 https://scouting25.streamlit.app/
 
 ---
 
