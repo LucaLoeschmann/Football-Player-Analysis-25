@@ -42,8 +42,6 @@ Traditional player comparisons often rely on metrics such as goals, assists or d
 
 To address this, all comparisons in this app are based on **per-90 normalised, role-defining metrics** such as ball progression, defensive involvement and chance creation. This shifts the focus from *how much* a player produces to *how* a player contributes within a team structure.
 
-Unsupervised machine learning is used to uncover statistical similarities without relying on predefined roles or positions. The goal is not to predict performance, but to identify **tactical profiles and playing tendencies**, allowing for more nuanced player evaluation.
-
 The similarity model is designed as a starting point rather than a final judgement. It generates a shortlist of stylistically comparable players, with the option to display a larger number of similar profiles if desired. These players can then be explored in more detail using the app’s additional features. Radar profiles provide further insight into role similarity, while head-to-head comparisons and leaderboards allow users to assess differences in actual output, efficiency and statistical production.
 
 ---
