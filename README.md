@@ -38,7 +38,7 @@ This project focuses on analysing football players based on their **playing styl
 
 The core idea is **player type comparison and replacement**: identifying players who behave similarly on the pitch, even if their statistical production differs due to team context, tactical system or role within the squad. This makes the tool particularly useful when evaluating potential replacements across different teams and leagues.
 
-Traditional player comparisons often rely on metrics such as goals, assists or defensive totals. However, these numbers are highly **context-dependent** and strongly influenced by factors like team strength, the teams tactical instructions and even the minutes played. As a result, raw output can be misleading when comparing players from different environments.
+Traditional player comparisons often rely on metrics such as goals, assists or defensive totals. However, these values are highly influenced by factors like team strength, the teams tactical instructions and even the minutes played. As a result, raw output can be misleading when comparing players from different environments.
 
 To address this, all comparisons in this app are based on **per-90 normalised, role-defining metrics** such as ball progression, defensive involvement and chance creation. This shifts the focus from *how much* a player produces to *how* a player contributes within a team structure.
 
