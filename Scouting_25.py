@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 from sklearn.metrics.pairwise import cosine_similarity
 from pathlib import Path
 
-# ✅ MUST be the first Streamlit command
+# MUST be the first Streamlit command
 st.set_page_config(
     layout="wide",
     page_title="Football Player Analysis Tool 24-25",
@@ -23,7 +23,7 @@ goalkeeper_combined_file_path = data_dir / "goalkeeper_combined_df.parquet"
 outfield_file_path = data_dir / "outfield_df.parquet"
 goalkeeper_file_path = data_dir / "goalkeepers_df.parquet"
 
-# ✅ Reference files = benchmark distributions for DF/MF/FW etc.
+# Reference files = benchmark distributions for DF/MF/FW etc.
 RADAR_REFERENCE_FILES = {
     "Outfield Players": {
         "generic": data_dir / "outfield_radar_reference__generic.parquet",
@@ -63,10 +63,10 @@ NON_PER90_GOALKEEPER = [
 ]
 
 # ----------------------------
-# ✅ Aggregation exceptions (do NOT sum in groupby)
+# Aggregation exceptions (do NOT sum in groupby)
 # ----------------------------
-# Alles, was "Rate/Percentage/Average/Per Shot" ist, darf beim Aggregieren nicht summiert werden.
-# Wir halten diese Spalten im aggregierten DF via "first".
+# Anything that is a Rate/Percentage/Average/Per Shot must not be summed when aggregating.
+# We keep those columns in the aggregated DF via "first".
 NON_AGG_SUM_COLS = set(
     NON_PER90_OUTFIELD
     + NON_PER90_GOALKEEPER
@@ -76,7 +76,7 @@ NON_AGG_SUM_COLS = set(
         "Penalty Kicks Save Percentage",
         "Goal Kicks Average Length",
         "Post-Shot Expected Goals per Shot on Target",
-        # falls in deinen DF vorhanden:
+        # in case these exist in your DF:
         "Goals per Shot",
         "Goals per Shot on Target",
         "Aerials Win Percentage",
@@ -99,6 +99,7 @@ RADAR_PRESET_LABELS_GOALKEEPER = {"generic": "Overview"}
 # ----------------------------
 POS_TOKEN_ORDER = {"DF": 0, "MF": 1, "FW": 2}
 
+
 def primary_pos(pos: str) -> str:
     """Map combos like 'DF,FW' / 'FW DF' to a primary bucket: DF / MF / FW."""
     if pd.isna(pos):
@@ -109,6 +110,7 @@ def primary_pos(pos: str) -> str:
     if not parts:
         return ""
     return min(parts, key=lambda x: POS_TOKEN_ORDER[x])
+
 
 # ----------------------------
 # Data Loading
@@ -121,29 +123,31 @@ def load_all_data():
     goalkeeper_df = pd.read_parquet(goalkeeper_file_path, engine="fastparquet")
     return combined_df, goalkeeper_combined_df, outfield_df, goalkeeper_df
 
+
 @st.cache_data(ttl=3600)
 def load_radar_reference(player_type: str, preset_name: str) -> pd.DataFrame:
     path = RADAR_REFERENCE_FILES[player_type][preset_name]
     return pd.read_parquet(path, engine="fastparquet")
 
+
 # ----------------------------
-# ✅ ONE aggregation function for all pages
+# One aggregation function for all pages
 # ----------------------------
 @st.cache_data
 def aggregate_players_safely(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Aggregiert pro Player Name.
-    - Zählwerte werden summiert (Goals, Shots, Tackles, etc.)
-    - Percentages/Averages/Rate-Spalten werden NICHT summiert, sondern via "first" behalten
+    Aggregates by Player Name.
+    - Counting stats are summed (Goals, Shots, Tackles, etc.)
+    - Percentage/average/rate columns are NOT summed; they are kept via "first"
     """
     df = df.copy()
 
     num_cols = df.select_dtypes(include=[np.number]).columns.tolist()
 
-    # numerische Spalten, die wir summieren dürfen (alles außer Age und NON_AGG_SUM_COLS)
+    # Numeric columns we are allowed to sum (everything except Age and NON_AGG_SUM_COLS)
     sum_cols = [c for c in num_cols if (c != "Age") and (c not in NON_AGG_SUM_COLS)]
 
-    # numerische Spalten, die wir NICHT summieren, aber behalten wollen
+    # Numeric columns we do NOT sum but want to keep
     keep_first_cols = [c for c in num_cols if c in NON_AGG_SUM_COLS]
 
     agg_dict = {
@@ -159,6 +163,7 @@ def aggregate_players_safely(df: pd.DataFrame) -> pd.DataFrame:
 
     out = df.groupby("Player Name", as_index=False).agg(agg_dict)
     return out
+
 
 # ----------------------------
 # Filters
@@ -187,6 +192,7 @@ def apply_filters(
         out = out[out["PosGroup"].isin(pos_groups)]
 
     if apply_competition_filter and competition:
+
         def comp_match(val):
             if pd.isna(val):
                 return False
@@ -196,6 +202,7 @@ def apply_filters(
         out = out[out["Competition"].apply(comp_match)]
 
     return out
+
 
 # ----------------------------
 # Radar presets
@@ -304,6 +311,7 @@ def get_similar_players_cosine(selected_player, df, n_top=10):
 
     return similar_players[["Rank", "Player Name", "Position", "Team", "Competition", "Age", "Nationality"]]
 
+
 # ----------------------------
 # Radar percentile computation vs reference distribution
 # ----------------------------
@@ -315,6 +323,7 @@ def _empirical_percentile(value: float, ref_values: np.ndarray) -> float:
     ref_sorted = np.sort(ref_values)
     idx = np.searchsorted(ref_sorted, value, side="right")
     return round(100.0 * idx / ref_sorted.size, 1)
+
 
 def compute_percentiles_vs_reference(
     raw_df: pd.DataFrame,
@@ -351,6 +360,7 @@ def compute_percentiles_vs_reference(
 
     return out.drop_duplicates(subset=["Player Name"], keep="first")
 
+
 # ----------------------------
 # Plot helpers
 # ----------------------------
@@ -368,6 +378,7 @@ def wrap_theta_label(s: str, max_len: int = 14) -> str:
     if cur:
         lines.append(cur)
     return "\n".join(lines)
+
 
 def create_radar_plot_from_percentiles(df_percentiles, player_names, radar_columns):
     colorway = ["#0072B2", "#D55E00", "#009E73", "#CC79A7", "#F0E442"]
@@ -449,13 +460,14 @@ def create_radar_plot_from_percentiles(df_percentiles, player_names, radar_colum
 
     st.plotly_chart(fig, use_container_width=True)
 
+
 @st.cache_data
 def build_comparison_table(df_input, players, stats, per90):
     df_player = df_input[df_input["Player Name"].isin(players)].copy()
     if len(df_player) == 0 or len(stats) == 0:
         return pd.DataFrame()
 
-    # ✅ remove duplicate players/stats (prevents non-unique columns/index)
+    # remove duplicate players/stats (prevents non-unique columns/index)
     players = list(dict.fromkeys([p for p in players if p is not None]))
     stats = list(dict.fromkeys([s for s in stats if s is not None]))
 
@@ -472,21 +484,22 @@ def build_comparison_table(df_input, players, stats, per90):
 
     df_show = df_player[keep_cols].copy()
 
-    # ✅ per90 calc (don’t divide 90s or rate/avg cols)
+    # per90 calc (don’t divide 90s or rate/avg cols)
     if per90:
         df_show["90s"] = pd.to_numeric(df_show["90s"], errors="coerce")
         for col in stats:
             if col != "90s" and col in df_show.columns and col not in NON_AGG_SUM_COLS:
                 df_show[col] = np.where(df_show["90s"] > 0, df_show[col] / df_show["90s"], np.nan)
 
-    # ✅ comparison_df: rows = stats, cols = player names
+    # comparison_df: rows = stats, cols = player names
     comp = df_show.set_index("Player Name")[stats].T
 
-    # ✅ CRITICAL FIX for Styler: must be unique index/columns
+    # Critical requirement for Styler: unique index/columns
     comp = comp.loc[~comp.index.duplicated(keep="first")]
     comp = comp.loc[:, ~comp.columns.duplicated(keep="first")]
 
     return comp
+
 
 # ----------------------------
 # Pages
@@ -541,6 +554,7 @@ def page_intro():
         st.markdown("**Leaderboards**")
         st.caption("Rank players by individual stats with filters and sorting.")
 
+
 def page_similar_players(combined_df, goalkeeper_combined_df):
     st.header("🔎 Similar Players")
     left, right = st.columns([1, 1])
@@ -565,7 +579,7 @@ def page_similar_players(combined_df, goalkeeper_combined_df):
         else:
             consolidated_df["PosGroup"] = "GK"
 
-        # --- Player picker ---
+        # Player picker
         player_info = (
             consolidated_df["Player Name"].astype(str)
             + " ("
@@ -668,6 +682,7 @@ def page_similar_players(combined_df, goalkeeper_combined_df):
         similar_players = get_similar_players_cosine(selected_player, filtered_df, n_top=n_top)
         st.dataframe(similar_players, hide_index=True, use_container_width=True)
 
+
 def page_radar(outfield_df, goalkeeper_df):
     st.header("📊 Radar Comparison")
     left, right = st.columns([1, 1])
@@ -746,7 +761,7 @@ def page_radar(outfield_df, goalkeeper_df):
             return
 
         if not rad_btn:
-            st.info("Select players + a profile, then click **Generate Radar Plot**.")
+            st.info("Select players and a profile, then click **Generate Radar Plot**.")
             return
 
         if len(selected_players) > 5:
@@ -767,13 +782,14 @@ def page_radar(outfield_df, goalkeeper_df):
 
         create_radar_plot_from_percentiles(df_pct, selected_players, radar_columns)
 
+
 def page_head_to_head(outfield_df, goalkeeper_df):
     st.header("🆚 Head-to-Head Player Comparison")
     left, right = st.columns([1, 1])
 
     with left:
         player_type = st.radio(
-            "Select Player Type",
+            "Select player type:",
             ["Outfield Players", "Goalkeepers"],
             key="h2h_type",
             horizontal=True,
@@ -781,7 +797,7 @@ def page_head_to_head(outfield_df, goalkeeper_df):
         df_raw = outfield_df if player_type == "Outfield Players" else goalkeeper_df
         df_agg = aggregate_players_safely(df_raw).copy()
 
-        # ✅ NEW: 90s filter (wie Leaderboard)
+        # 90s filter (like the leaderboard)
         with st.expander("Filters (optional)", expanded=False):
             apply_90s_filter = st.checkbox("Filter by Minutes (90s) Range", key="h2h_90s_chk")
             qualified_only = st.toggle(
@@ -815,7 +831,7 @@ def page_head_to_head(outfield_df, goalkeeper_df):
                 if qualified_only or apply_90s_filter:
                     st.warning("'90s' column missing – minutes filters ignored.")
 
-        # player dropdowns
+        # Player dropdowns
         df_agg["Player Info"] = (
             df_agg["Player Name"].astype(str)
             + " ("
@@ -835,7 +851,7 @@ def page_head_to_head(outfield_df, goalkeeper_df):
         if p2:
             selected_players_info.append(p2)
 
-        with st.expander("➕ Add More Players"):
+        with st.expander("Add more players"):
             for i in range(3, 6):
                 p = st.selectbox(f"Select Player {i}", ["None"] + player_options, index=0, key=f"h2h_p{i}")
                 if p != "None":
@@ -844,7 +860,7 @@ def page_head_to_head(outfield_df, goalkeeper_df):
         name_map = dict(zip(df_agg["Player Info"], df_agg["Player Name"]))
         selected_players = [name_map[x] for x in selected_players_info if x in name_map]
 
-        # ✅ prevent duplicates (very important for Styler uniqueness)
+        # Prevent duplicates (important for Styler uniqueness)
         selected_players = list(dict.fromkeys(selected_players))
 
         excluded_columns = [
@@ -859,19 +875,18 @@ def page_head_to_head(outfield_df, goalkeeper_df):
         ]
         stat_columns = [c for c in df_agg.columns if c not in excluded_columns]
 
-        # ✅ "90s" ist jetzt normal auswählbar, weil es NICHT mehr excluded ist
-        selected_stats = st.multiselect("Select Stats to Compare", stat_columns, key="h2h_stats")
-        selected_stats = list(dict.fromkeys(selected_stats))  # ✅ avoid dup stats
+        selected_stats = st.multiselect("Select stats to compare", stat_columns, key="h2h_stats")
+        selected_stats = list(dict.fromkeys(selected_stats))
 
         stat_type = st.radio(
-            "Select Data Type",
+            "Select data type",
             ["Raw Stats", "Per 90 Minutes"],
             key="h2h_dtype",
             horizontal=True,
         )
 
         run_h2h = st.button(
-            "Build Comparison Table",
+            "Build comparison table",
             key="h2h_btn",
             disabled=(p1 is None or p2 is None),
         )
@@ -884,7 +899,7 @@ def page_head_to_head(outfield_df, goalkeeper_df):
             return
 
         if not run_h2h:
-            st.info("Choose players + stats, then click **Build Comparison Table**.")
+            st.info("Choose players and stats, then click **Build comparison table**.")
             return
 
         comparison_df = build_comparison_table(
@@ -898,7 +913,7 @@ def page_head_to_head(outfield_df, goalkeeper_df):
             st.info("Select stats to display the comparison table.")
             return
 
-        # ✅ ABSOLUTE safety: Styler requires unique index/cols
+        # Absolute safety: Styler requires unique index/cols
         comparison_df = comparison_df.loc[~comparison_df.index.duplicated(keep="first")]
         comparison_df = comparison_df.loc[:, ~comparison_df.columns.duplicated(keep="first")]
 
@@ -940,7 +955,7 @@ def page_head_to_head(outfield_df, goalkeeper_df):
             is_negative = stat_name in negative_stats
 
             row_num = comparison_df.loc[stat_name]
-            if isinstance(row_num, pd.DataFrame):  # safety
+            if isinstance(row_num, pd.DataFrame):
                 row_num = row_num.iloc[0]
 
             row_num = pd.to_numeric(pd.Series(row_num), errors="coerce")
@@ -964,6 +979,7 @@ def page_head_to_head(outfield_df, goalkeeper_df):
 
         styled_df = comparison_fmt.style.apply(highlight_best, axis=1)
         st.dataframe(styled_df, use_container_width=True)
+
 
 def page_leaderboard(outfield_df, goalkeeper_df):
     st.header("🏆 Stat Leaderboard")
@@ -989,7 +1005,7 @@ def page_leaderboard(outfield_df, goalkeeper_df):
             apply_comp = st.checkbox("Filter by Competition", key="lb_comp_chk")
             apply_pos = st.checkbox("Filter by Position Group", key="lb_pos_chk")
 
-            # ✅ NEW: minutes/90s filters
+            # minutes/90s filters
             apply_90s_filter = st.checkbox("Filter by Minutes (90s) Range", key="lb_90s_chk")
             qualified_only = st.toggle(
                 "Qualified only (min 5 full matches / 5.0 90s)",
@@ -999,7 +1015,7 @@ def page_leaderboard(outfield_df, goalkeeper_df):
 
             age_range = (16, 50)
             nationalities, competitions, pos_groups = [], [], []
-            min_90s_range = None  # ✅ NEW
+            min_90s_range = None
 
             if apply_age:
                 age_range = st.slider("Age range:", 16, 50, (18, 30), key="lb_age_rng")
@@ -1030,7 +1046,7 @@ def page_leaderboard(outfield_df, goalkeeper_df):
                     key="lb_pos_sel",
                 )
 
-            # ✅ NEW: 90s range slider (dynamic limits)
+            # 90s range slider (dynamic limits)
             if apply_90s_filter:
                 if "90s" in df_agg.columns:
                     _s90 = pd.to_numeric(df_agg["90s"], errors="coerce")
@@ -1050,8 +1066,14 @@ def page_leaderboard(outfield_df, goalkeeper_df):
                     apply_90s_filter = False
 
         excluded = {
-            "Player Name", "Team", "Position", "Competition", "Nationality", "Age",
-            "Year Born", "PosGroup"
+            "Player Name",
+            "Team",
+            "Position",
+            "Competition",
+            "Nationality",
+            "Age",
+            "Year Born",
+            "PosGroup",
         }
         numeric_stats = [c for c in df_agg.select_dtypes(include=[np.number]).columns if c not in excluded]
 
@@ -1072,7 +1094,7 @@ def page_leaderboard(outfield_df, goalkeeper_df):
 
     with right:
         if not run:
-            st.info("Select filters + stat, then click **Build Leaderboard**.")
+            st.info("Select filters and a stat, then click **Build Leaderboard**.")
             return
 
         if stat is None:
@@ -1093,7 +1115,7 @@ def page_leaderboard(outfield_df, goalkeeper_df):
             pos_groups=pos_groups,
         )
 
-        # ✅ NEW: apply 90s filters (Leaderboard only)
+        # apply 90s filters (Leaderboard only)
         if "90s" in df.columns:
             df["90s"] = pd.to_numeric(df["90s"], errors="coerce")
 
@@ -1107,10 +1129,10 @@ def page_leaderboard(outfield_df, goalkeeper_df):
             if qualified_only or apply_90s_filter:
                 st.warning("'90s' column missing – minutes filters ignored.")
 
-        # ✅ per90: nur teilen, wenn stat NICHT in NON_AGG_SUM_COLS ist (Percentages/Averages bleiben unberührt)
+        # per90: only divide if stat is not a rate/avg column
         if per90:
             if "90s" not in df.columns:
-                st.error("Per 90 requested but '90s' column is missing.")
+                st.error("Per 90 requested but the '90s' column is missing.")
                 return
             if stat != "90s" and stat not in NON_AGG_SUM_COLS:
                 df[stat] = np.where(df["90s"] > 0, df[stat] / df["90s"], np.nan)
@@ -1127,7 +1149,7 @@ def page_leaderboard(outfield_df, goalkeeper_df):
         out = df[show_cols].head(int(top_n)).copy()
         out.insert(0, "Rank", range(1, len(out) + 1))
 
-        # ✅ NEW: Anzeige-Formatierung wie bei H2H (minimal, Sorting bleibt korrekt)
+        # display formatting like H2H (sorting stays correct)
         def _fmt(x):
             if pd.isna(x):
                 return ""
@@ -1144,6 +1166,7 @@ def page_leaderboard(outfield_df, goalkeeper_df):
             out_disp["90s"] = out_disp["90s"].apply(_fmt)
 
         st.dataframe(out_disp, hide_index=True, use_container_width=True)
+
 
 # ----------------------------
 # Main
@@ -1167,6 +1190,7 @@ def main():
 
     with tab4:
         page_leaderboard(outfield_df, goalkeeper_df)
+
 
 if __name__ == "__main__":
     main()
